@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>nails.melody_bych</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#ff66b2">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/service-worker.js');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>nails.melody_bych</h1>
+        <form action="/agendar" method="post">
+            <label>Nombre: <input type="text" name="nombre" required></label>
+            <label>Fecha: <input type="date" name="fecha" required></label>
+            <label>Hora: <input type="time" name="hora" required></label>
+            <label>Servicio:
+                <select name="servicio" required>
+                    {% for servicio in servicios %}
+                    <option value="{{ servicio }}">{{ servicio }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Agendar</button>
+        </form>
+
+        <h2>Disponibilidad</h2>
+        <input type="date" id="fecha_disponibilidad">
+        <button onclick="verDisponibilidad()">Ver disponibilidad</button>
+        <div id="disponibilidad"></div>
+
+        <h2>Turnos Agendados</h2>
+        <button onclick="document.getElementById('lista-turnos').classList.toggle('hidden')">Mostrar/ocultar</button>
+        <ul id="lista-turnos" class="hidden">
+            {% for turno in turnos %}
+                <li>
+                    {{ turno.fecha }} {{ turno.hora }} - {{ turno.nombre }} ({{ turno.servicio }})
+                    <form action="/eliminar" method="post" style="display:inline">
+                        <input type="hidden" name="fecha" value="{{ turno.fecha }}">
+                        <input type="hidden" name="hora" value="{{ turno.hora }}">
+                        <button type="submit">❌</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function verDisponibilidad() {
+            const fecha = document.getElementById("fecha_disponibilidad").value;
+            if (!fecha) return;
+            fetch(`/ver_disponibilidad?fecha=${fecha}`)
+                .then(res => res.json())
+                .then(data => {
+                    const cont = document.getElementById("disponibilidad");
+                    cont.innerHTML = "";
+                    data.forEach(bloque => {
+                        const div = document.createElement("div");
+                        div.className = "bloque " + bloque.estado;
+                        div.textContent = bloque.hora;
+                        cont.appendChild(div);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
